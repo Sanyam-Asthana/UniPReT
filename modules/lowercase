@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# UniPreT Module: lowercase
+# Converts standard input or files to lowercase
+#
+# Usage: 
+#   lowercase [OPTION]... [FILE]...
+#   cat corpus.txt | lowercase
+
+# -e (errexit) prevents errors from cascading down the script
+# -u (nounset) treats unset variables as errors
+set -eu 
+
+VERSION="0.1.0"
+PROGRAM_NAME="lowercase"
+
+usage() {
+  cat <<EOF
+Usage: $PROGRAM_NAME [OPTION]... [FILE]...
+Convert text streams to lowercase
+
+Options:
+  -h, --help     Display this help message and exit
+  -v, --version  Output version information and exit
+
+Examples:
+  echo "Hello WORLD" | $PROGRAM_NAME
+  $PROGRAM_NAME input.txt > output.txt
+EOF
+}
+
+version() {
+    cat <<EOF
+$PROGRAM_NAME (UniPreT) $VERSION
+EOF
+}
+
+error() {
+    cat <<EOF
+$PROGRAM_NAME: invalid option -- '$1'
+Try '$PROGRAM_NAME --help' for more information.
+EOF
+>&2
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -v|--version)
+            version
+            exit 0
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            error $1
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+awk '{ print tolower($0) }' "$@"
