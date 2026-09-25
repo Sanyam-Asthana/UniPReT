@@ -1,23 +1,23 @@
 #!/bin/sh
 
-# UniPreT Module: lowercase
-# Converts text streams to lowercase
+# UniPreT Module: uppercase
+# Convert text streams to uppercase
 #
 # Usage: 
-#   lowercase [OPTION]... [FILE]...
-#   cat corpus.txt | lowercase
+#   uppercase [OPTION]... [FILE]...
+#   cat corpus.txt | uppercase
 
 # -e (errexit) prevents errors from cascading down the script
 # -u (nounset) treats unset variables as errors
 set -eu 
 
 VERSION="0.1.0"
-PROGRAM_NAME="lowercase"
+PROGRAM_NAME="uppercase"
 
 usage() {
   cat <<EOF
 Usage: $PROGRAM_NAME [OPTION]... [FILE]...
-Convert text streams to lowercase
+Convert text streams to uppercase
 
 Options:
   -h, --help     Display this help message and exit
@@ -72,4 +72,4 @@ if [ -z "${LC_ALL:-}" ]; then
   export LC_CTYPE="${LC_CTYPE:-${LANG:-C.UTF-8}}"
 fi
 
-awk '{ print tolower($0) }' "$@"
+awk '{ print toupper($0) }' "$@"

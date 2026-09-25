@@ -1,0 +1,94 @@
+#!/bin/sh
+
+# UniPreT Module: strip-punctuation
+# Strips punctuation from text stream
+#
+# Usage: 
+#   strip-punctuation [OPTION]... [FILE]...
+#   cat corpus.txt | strip-punctuation
+
+# -e (errexit) prevents errors from cascading down the script
+# -u (nounset) treats unset variables as errors
+set -eu 
+
+VERSION="0.1.0"
+PROGRAM_NAME="strip-punctuation"
+
+usage() {
+  cat <<EOF
+Usage: $PROGRAM_NAME [OPTION]... [FILE]...
+Strips punctuation from text stream
+
+Options:
+  -r, --replace [CHAR] Replace the punctuation with CHAR (default: single space)
+  -h, --help           Display this help message and exit
+  -v, --version        Output version information and exit
+
+Examples:
+  echo "Hello WORLD" | $PROGRAM_NAME 
+  echo "state-of-the-art" | $PROGRAM_NAME -r "_"
+  $PROGRAM_NAME input.txt > output.txt
+EOF
+}
+
+version() {
+    cat <<EOF
+$PROGRAM_NAME (UniPreT) $VERSION
+EOF
+}
+
+error() {
+    cat <<EOF
+$PROGRAM_NAME: invalid option -- '$1'
+Try '$PROGRAM_NAME --help' for more information.
+EOF
+>&2
+}
+
+MODE="REMOVE"
+REPLACE_CHAR=" "
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -v|--version)
+            version
+            exit 0
+            ;;
+        -r|--replace)
+            MODE="REPLACE"
+            # ${2#-} strips off the '-' in the start, if any
+            if [ $# -gt 1 ] && [ "${2#-}" = "$2" ]; then
+                REPLACE_CHAR="$2"
+                shift
+            else
+                REPLACE_CHAR=" "
+            fi
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            error $1
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+if [ -z "${LC_ALL:-}" ]; then
+  export LC_CTYPE="${LC_CTYPE:-${LANG:-C.UTF-8}}"
+fi
+
+if [ "$MODE" = "REMOVE" ]; then
+    awk '{ gsub(/[[:punct:]]/, ""); print }' "$@"
+else
+    awk -v r="$REPLACE_CHAR" '{ gsub(/[[:punct:]]/, r); print }' "$@"
+fi
