@@ -1,0 +1,120 @@
+#!/bin/sh
+
+# UniPreT Module: tokenize
+# Tokenizes text streams
+#
+# Usage: 
+#   lowercase [OPTION]... [FILE]...
+#   cat corpus.txt | tokenize
+
+# -e (errexit) prevents errors from cascading down the script
+# -u (nounset) treats unset variables as errors
+set -eu 
+
+VERSION="0.1.0"
+PROGRAM_NAME="tokenize"
+
+usage() {
+  cat <<EOF
+Usage: $PROGRAM_NAME [OPTION]... [FILE]...
+Tokenizes text streams
+
+Options:
+  -d, --delimiter [CLASS] POSIX character class or character regex to split on (default: [:space:])
+  -e, --empty-lines       Preserve blank lines from the input stream
+  -h, --help              Display this help message and exit
+  -v, --version           Output version information and exit
+
+Examples:
+  echo "Hello WORLD" | $PROGRAM_NAME
+  $PROGRAM_NAME input.txt > output.txt
+EOF
+}
+
+version() {
+    cat <<EOF
+$PROGRAM_NAME (UniPreT) $VERSION
+EOF
+}
+
+error() {
+    cat <<EOF
+$PROGRAM_NAME: invalid option -- '$1'
+Try '$PROGRAM_NAME --help' for more information.
+EOF
+>&2
+}
+
+arg_error() {
+    cat <<EOF
+$PROGRAM_NAME: option '$1' requires an argument
+EOF
+>&2
+}
+
+DELIMITER="[:space:]"
+PRESERVE_EMPTY=0
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -d|--delimiter)
+            if [ $# -gt 1 ] && [ "${2#-}" = "$2" ]; then
+                DELIMTER=$2
+                shift 2
+            else
+                arg_error $1
+                exit 1
+            fi
+            ;;
+        -e|--empty-lines)
+            PRESERVE_EMPTY=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -v|--version)
+            version
+            exit 0
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            error $1
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
+
+if [ -z "${LC_ALL:-}" ]; then
+  export LC_CTYPE="${LC_CTYPE:-${LANG:-C.UTF-8}}"
+fi
+
+if [ "$PRESERVE_EMPTY" -eq 1 ]; then
+    awk -v d="[$DELIMITER]+" '
+        {
+            n = split($0, tokens, d)
+            for(i = 1; i <= n; i++) {
+                if (tokens[i] != "") print tokens[i]
+            }
+            print ""
+        }
+    ' "$@"
+else
+    awk -v d="[$DELIMITER]+" '
+        {
+            n = split($0, tokens, d)
+            for(i = 1; i <= n; i++) {
+                if (tokens[i] != "") print tokens[i]
+            }
+        }
+    ' "$@"
+fi
+
